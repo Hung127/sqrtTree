@@ -1,6 +1,6 @@
-#ifndef SQRT_TREE
-#define SQRT_TREE
-#define SqrtTreeItem int
+#ifndef FENWICK_TREE
+#define FENWICK_TREE
+#define FenwickTreeItem int
 #include "BasicLibraries.h"
 using namespace std;
 
