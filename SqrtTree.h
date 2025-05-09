@@ -161,7 +161,7 @@ class SqrtTree {
             if (layer >= (int)layers.size()) {
                 return;
             }
-            int bSzLog = (layers[layer]+1) >> 1;
+            int bSzLog = (layers[layer] + 1) >> 1;
             int bSz = 1 << bSzLog;
             int blockIdx = (x - lBound) >> bSzLog;
             int l = lBound + (blockIdx << bSzLog);
@@ -172,11 +172,20 @@ class SqrtTree {
             } else {
                 buildBetween(layer, lBound, rBound, betweenOffset);
             }
-            update(layer+1, l, r, betweenOffset, x);
+            update(layer + 1, l, r, betweenOffset, x);
         }
 
     
     public:
+        SqrtTreeItem query(int l, int r) {
+            return query(l, r, 0, 0);
+        }
+
+        void update(int idx, const SqrtTreeItem &val) {
+            arr[idx] = val;
+            update(0, 0, n, 0, idx);
+        }
+
         SqrtTree(const vector<SqrtTreeItem> &a)
         : n((int) arr.size()), ceilLog(log2Up(n)), onLayer(ceilLog + 1), arr(a), clz(1 << ceilLog) {
             // algorithm to compute clz
