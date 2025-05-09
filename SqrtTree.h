@@ -102,7 +102,7 @@ class SqrtTree {
             int childBlockSize = 1 << childBlockSizeLog;
             int childBlocksCountLog = layers[layer] >> 1;
             // find the beginning child block that contains l
-            // turn off all the necessary bits to access the beginning of the block
+            // turn off all the unecessary bits to access the beginning of the block
             int lBound = (((l - base) >> layers[layer]) << layers[layer]) + base;
             
             // find between range (child block)
