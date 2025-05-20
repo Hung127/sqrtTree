@@ -1,6 +1,7 @@
 ﻿#ifndef SEGMENT_TREE
 #define SEGMENT_TREE
 #define SegmentTreeItem int
+
 #include "BasicLibraries.h"
 using namespace std;
 
