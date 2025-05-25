@@ -156,7 +156,7 @@ class SqrtTree {
                 buildBetween(layer, lBound, rBound, betweenOffset);
             }
         }
-
+        
         void update(int layer, int lBound, int rBound, int betweenOffset, int x) {
             if (layer >= (int)layers.size()) {
                 return;
