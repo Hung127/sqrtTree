@@ -151,6 +151,7 @@ class SqrtTree {
             }
             // special case: first layer do not use a between
             if (layer == 0) {
+                // just build that layer
                 buildBetweenZero();
             } else {
                 buildBetween(layer, lBound, rBound, betweenOffset);
