@@ -156,7 +156,7 @@ public:
     }
 
     //Change value
-    void update(int idx, int val) {
+    void set(int idx, int val) {
         if (idx < 0 || idx >= n) {
             cout << "Invalid index!" << std::endl;
             return;
@@ -165,7 +165,7 @@ public:
     }
 
     //Update by adding value
-    void updateRange(int left, int right, int val) {
+    void update(int left, int right, int val) {
         if (left < 0 || right >= n || left > right) {
             cout << "Invalid query range!" << std::endl;
             return;
@@ -173,7 +173,7 @@ public:
         updateRange(0, 0, n - 1, left, right, val);
     }
 
-    //Sum
+    //Sum range from left to right
     int query(int left, int right) {
         if (left < 0 || right >= n || left > right) {
             cout << "Invalid query range!" << std::endl;

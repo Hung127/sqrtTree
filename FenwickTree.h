@@ -52,13 +52,13 @@ public:
 	}
 
 	//Sum range from left to right
-	int sumRange(int left, int right) {
+	int query(int left, int right) {
 		return getSum(right) - getSum(left - 1);
 	}
 
 	//Get value
 	int get(int idx) {
-		return sumRange(idx, idx);
+		return query(idx, idx);
 	}
 };
 
