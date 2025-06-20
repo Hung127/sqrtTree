@@ -56,12 +56,7 @@ void mergeASC(vector<int>& arr, int left, int mid, int right) {
             arr[k] = L[i];
             i++;
         }
-        else {
-            arr[k] = R[j];
-            j++;
         }
-        k++;
-    }
 
     while (i < n1) {
         arr[k] = L[i];
@@ -112,11 +107,6 @@ void mergeDESC(vector<int>& arr, int left, int mid, int right) {
         }
         k++;
     }
-
-    while (i < n1) {
-        arr[k] = L[i];
-        i++;
-        k++;
     }
 
     while (j < n2) {
