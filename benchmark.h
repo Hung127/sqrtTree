@@ -37,94 +37,43 @@ struct TestConfig {
     int fixLength; // Do dai co dinh cho doan truy van (neu dung FIXED_LENGTH)
 };
 
-void mergeASC(vector<int>& arr, int left, int mid, int right) {
-    int n1 = mid - left + 1;
-    int n2 = right - mid;
+// Ham partition tong quat voi comparator
+template<typename Compare>
+int partition(vector<int>& arr, int low, int high, Compare comp) {
+    int pivot = arr[high]; // Chon phan tu cuoi lam pivot
+    int i = low - 1; // Chi so cua phan tu nho hon
 
-    vector<int> L(n1), R(n2);
-
-    for (int i = 0; i < n1; i++)
-        L[i] = arr[left + i];
-    for (int j = 0; j < n2; j++)
-        R[j] = arr[mid + 1 + j];
-
-    int i = 0, j = 0;
-    int k = left;
-
-    while (i < n1 && j < n2) {
-        if (L[i] <= R[j]) {
-            arr[k] = L[i];
+    for (int j = low; j < high; j++) {
+        // Neu phan tu hien tai thoa man dieu kien so sanh voi pivot
+        if (comp(arr[j], pivot)) {
             i++;
+            swap(arr[i], arr[j]);
         }
-        }
-
-    while (i < n1) {
-        arr[k] = L[i];
-        i++;
-        k++;
     }
 
-    while (j < n2) {
-        arr[k] = R[j];
-        j++;
-        k++;
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
+}
+
+// Ham quickSort tong quat voi comparator
+template<typename Compare>
+void quickSort(vector<int>& arr, int low, int high, Compare comp) {
+    if (low < high) {
+        int pi = partition(arr, low, high, comp);
+
+        quickSort(arr, low, pi - 1, comp);
+        quickSort(arr, pi + 1, high, comp);
     }
 }
 
-void mergeSortASC(vector<int>& arr, int left, int right)
-{
-    if (left >= right)
-        return;
-
-    int mid = left + (right - left) / 2;
-    mergeSortASC(arr, left, mid);
-    mergeSortASC(arr, mid + 1, right);
-    mergeASC(arr, left, mid, right);
+// Ham wrapper de sap xep tang dan
+void quickSortASC(vector<int>& arr, int left, int right) {
+    quickSort(arr, left, right, [](int a, int b) { return a <= b; });
 }
 
-void mergeDESC(vector<int>& arr, int left, int mid, int right) {
-    int n1 = mid - left + 1;
-    int n2 = right - mid;
-
-    vector<int> L(n1), R(n2);
-
-    for (int i = 0; i < n1; i++)
-        L[i] = arr[left + i];
-    for (int j = 0; j < n2; j++)
-        R[j] = arr[mid + 1 + j];
-
-    int i = 0, j = 0;
-    int k = left;
-
-    while (i < n1 && j < n2) {
-        if (L[i] >= R[j]) {
-            arr[k] = L[i];
-            i++;
-        }
-        else {
-            arr[k] = R[j];
-            j++;
-        }
-        k++;
-    }
-    }
-
-    while (j < n2) {
-        arr[k] = R[j];
-        j++;
-        k++;
-    }
-}
-
-void mergeSortDESC(vector<int>& arr, int left, int right)
-{
-    if (left >= right)
-        return;
-
-    int mid = left + (right - left) / 2;
-    mergeSortDESC(arr, left, mid);
-    mergeSortDESC(arr, mid + 1, right);
-    mergeDESC(arr, left, mid, right);
+// Ham wrapper de sap xep giam dan
+void quickSortDESC(vector<int>& arr, int left, int right) {
+    quickSort(arr, left, right, [](int a, int b) { return a >= b; });
 }
 
 // Ham sinh so ngau nhien trong khoang [minVal, maxVal]
@@ -152,14 +101,14 @@ vector<int> generateArray(const TestConfig& config) {
         for (int i = 0; i < config.n; i++) {
             arr[i] = randomInt(config.minVal, config.maxVal);
         }
-        mergeSortASC(arr, 0, config.n - 1);
+        quickSortASC(arr, 0, config.n - 1);
         break;
     }
     case DESC: {
         for (int i = 0; i < config.n; i++) {
             arr[i] = randomInt(config.minVal, config.maxVal);
         }
-        mergeSortDESC(arr, 0, config.n - 1);
+        quickSortDESC(arr, 0, config.n - 1);
         break;
     }
     case CONSTANT: {
