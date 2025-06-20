@@ -1,4 +1,4 @@
-#ifndef benchmark_h
+﻿#ifndef benchmark_h
 #define benchmark_h
 
 #include "BasicLibraries.h"
@@ -8,7 +8,9 @@
 #include <cstdlib>
 #include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <string>
+#define ll long long
 
 using namespace std;
 
@@ -35,6 +37,26 @@ struct TestConfig {
     ArrayPattern arrPat; // Mau sinh mang
     RangePattern rangePat; // Mau sinh doan truy van
     int fixLength; // Do dai co dinh cho doan truy van (neu dung FIXED_LENGTH)
+};
+
+struct BenchmarkResult {
+    string dataStructureName;
+    ll buildTime; // Thoi gian build
+    ll totalUpdateTime; // Tong thoi gian cap nhat (μs)
+    ll totalQueryTime; // Tong thoi gian cua truy van (μs)
+    int numUpdates; // So luong cap nhat
+    int numQueries; // So luong truy van
+    double avgUpdateTime; // Thoi gian truy cap trung binh (μs)
+    double avgQueryTime; // Thoi gian truy van trung binh (μs)
+
+    BenchmarkResult() : buildTime(0), totalUpdateTime(0), totalQueryTime(0),
+        numUpdates(0), numQueries(0), avgUpdateTime(0), avgQueryTime(0) {
+    }
+
+    void calculateAverages() {
+        avgUpdateTime = numUpdates > 0 ? (double)totalUpdateTime / numUpdates : 0;
+        avgQueryTime = numQueries > 0 ? (double)totalQueryTime / numQueries : 0;
+    }
 };
 
 // Ham partition tong quat voi comparator
@@ -208,6 +230,250 @@ void generateTest(const string& filename, const TestConfig& config) {
     cout << "- Kich thuoc mang: " << config.n << endl;
     cout << "- So truy van: " << config.q << endl;
     cout << "- Ty le cap nhat: " << config.ratio * 100 << "%" << endl;
+}
+
+// Ham benchmark cho SqrtTree
+BenchmarkResult benchmarkSqrtTree(const string& filename) {
+    BenchmarkResult result;
+    result.dataStructureName = "SqrtTree";
+
+    ifstream in(filename);
+    if (!in.is_open()) {
+        cerr << "Khong the mo file " << filename << endl;
+        return result;
+    }
+
+    int n, q;
+    in >> n >> q;
+
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        in >> arr[i];
+    }
+
+    // Do thoi gian xay dung
+    auto startBuild = high_resolution_clock::now();
+    SqrtTree sqrtTree(arr);
+    auto endBuild = high_resolution_clock::now();
+    result.buildTime = duration_cast<microseconds>(endBuild - startBuild).count();
+
+    // Xu ly cac truy van
+    for (int i = 0; i < q; i++) {
+        int type, x, y;
+        in >> type >> x >> y;
+
+        if (type == 1) { // Update
+            auto startUpdate = high_resolution_clock::now();
+            sqrtTree.update(x, y);
+            auto endUpdate = high_resolution_clock::now();
+            result.totalUpdateTime += duration_cast<microseconds>(endUpdate - startUpdate).count();
+            result.numUpdates++;
+        }
+        else { // Query
+            auto startQuery = high_resolution_clock::now();
+            sqrtTree.query(x, y);
+            auto endQuery = high_resolution_clock::now();
+            result.totalQueryTime += duration_cast<microseconds>(endQuery - startQuery).count();
+            result.numQueries++;
+        }
+    }
+
+    in.close();
+    result.calculateAverages();
+    return result;
+}
+
+// Ham benchmark cho SegmentTree
+BenchmarkResult benchmarkSegmentTree(const string& filename) {
+    BenchmarkResult result;
+    result.dataStructureName = "SegmentTree";
+
+    ifstream in(filename);
+    if (!in.is_open()) {
+        cerr << "Khong the mo file " << filename << endl;
+        return result;
+    }
+
+    int n, q;
+    in >> n >> q;
+
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        in >> arr[i];
+    }
+
+    // Do thoi gian xay dung
+    auto startBuild = high_resolution_clock::now();
+    SegmentTree segTree(arr);
+    auto endBuild = high_resolution_clock::now();
+    result.buildTime = duration_cast<microseconds>(endBuild - startBuild).count();
+
+    // Xu ly cac truy van
+    for (int i = 0; i < q; i++) {
+        int type, x, y;
+        in >> type >> x >> y;
+
+        if (type == 1) { // Update
+            auto startUpdate = high_resolution_clock::now();
+            segTree.set(x, y);
+            auto endUpdate = high_resolution_clock::now();
+            result.totalUpdateTime += duration_cast<microseconds>(endUpdate - startUpdate).count();
+            result.numUpdates++;
+        }
+        else { // Query
+            auto startQuery = high_resolution_clock::now();
+            segTree.query(x, y);
+            auto endQuery = high_resolution_clock::now();
+            result.totalQueryTime += duration_cast<microseconds>(endQuery - startQuery).count();
+            result.numQueries++;
+        }
+    }
+
+    in.close();
+    result.calculateAverages();
+    return result;
+}
+
+// Ham benchmark cho FenwickTree
+BenchmarkResult benchmarkFenwickTree(const string& filename) {
+    BenchmarkResult result;
+    result.dataStructureName = "FenwickTree";
+
+    ifstream in(filename);
+    if (!in.is_open()) {
+        cerr << "Khong the mo file " << filename << endl;
+        return result;
+    }
+
+    int n, q;
+    in >> n >> q;
+
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        in >> arr[i];
+    }
+
+    // Do thoi gian xay dung
+    auto startBuild = high_resolution_clock::now();
+    FenwickTree fenwickTree(arr);
+    auto endBuild = high_resolution_clock::now();
+    result.buildTime = duration_cast<microseconds>(endBuild - startBuild).count();
+
+    // Xu ly cac truy van
+    for (int i = 0; i < q; i++) {
+        int type, x, y;
+        in >> type >> x >> y;
+
+        if (type == 1) { // Update
+            auto startUpdate = high_resolution_clock::now();
+            fenwickTree.update(x, y);
+            auto endUpdate = high_resolution_clock::now();
+            result.totalUpdateTime += duration_cast<microseconds>(endUpdate - startUpdate).count();
+            result.numUpdates++;
+        }
+        else { // Query
+            auto startQuery = high_resolution_clock::now();
+            fenwickTree.query(x, y);
+            auto endQuery = high_resolution_clock::now();
+            result.totalQueryTime += duration_cast<microseconds>(endQuery - startQuery).count();
+            result.numQueries++;
+        }
+    }
+
+    in.close();
+    result.calculateAverages();
+    return result;
+}
+
+// Ham chay tat ca cac benchmark va so sanh
+vector<BenchmarkResult> runAllBenchmarks(const string& filename) {
+    vector<BenchmarkResult> results;
+
+    cout << "Dang chay benchmark cho file: " << filename << endl;
+    cout << "=======================================" << endl;
+
+    // Benchmark SqrtTree
+    cout << "Benchmark SqrtTree..." << endl;
+    results.push_back(benchmarkSqrtTree(filename));
+
+    // Benchmark SegmentTree
+    cout << "Benchmark SegmentTree..." << endl;
+    results.push_back(benchmarkSegmentTree(filename));
+
+    // Benchmark FenwickTree
+    cout << "Benchmark FenwickTree..." << endl;
+    results.push_back(benchmarkFenwickTree(filename));
+
+    return results;
+}
+
+// Ham in ket qua benchmark
+void printBenchmarkResults(const vector<BenchmarkResult>& results) {
+    cout << "\n======= KET QUA BENCHMARK =======" << endl;
+    cout << left << setw(15) << "Data Structure"
+        << setw(12) << "Build(μs)"
+        << setw(12) << "Updates"
+        << setw(15) << "Avg Update(μs)"
+        << setw(12) << "Queries"
+        << setw(15) << "Avg Query(μs)"
+        << setw(15) << "Total Update(μs)"
+        << setw(15) << "Total Query(μs)" << endl;
+    cout << string(110, '-') << endl;
+
+    for (const auto& result : results) {
+        cout << left << setw(15) << result.dataStructureName
+            << setw(12) << result.buildTime
+            << setw(12) << result.numUpdates
+            << setw(15) << fixed << setprecision(2) << result.avgUpdateTime
+            << setw(12) << result.numQueries
+            << setw(15) << fixed << setprecision(2) << result.avgQueryTime
+            << setw(15) << result.totalUpdateTime
+            << setw(15) << result.totalQueryTime << endl;
+    }
+    cout << endl;
+}
+
+// Ham ghi ket qua ra file CSV
+void saveBenchmarkToCSV(const vector<BenchmarkResult>& results, const string& csvFilename) {
+    ofstream csvFile(csvFilename);
+    if (!csvFile.is_open()) {
+        cerr << "Khong the tao file CSV: " << csvFilename << endl;
+        return;
+    }
+
+    // Header
+    csvFile << "DataStructure,BuildTime(μs),NumUpdates,AvgUpdateTime(μs),NumQueries,AvgQueryTime(μs),TotalUpdateTime(μs),TotalQueryTime(μs)\n";
+
+    // Data rows
+    for (const auto& result : results) {
+        csvFile << result.dataStructureName << ","
+            << result.buildTime << ","
+            << result.numUpdates << ","
+            << result.avgUpdateTime << ","
+            << result.numQueries << ","
+            << result.avgQueryTime << ","
+            << result.totalUpdateTime << ","
+            << result.totalQueryTime << "\n";
+    }
+
+    csvFile.close();
+    cout << "Da luu ket qua benchmark vao file: " << csvFilename << endl;
+}
+
+// Ham chay toan bo experiment
+void runExperiment(const string& filename, const TestConfig& config) {
+    // Tao test case
+    generateTest(filename, config);
+
+    // Chay benchmark
+    vector<BenchmarkResult> results = runAllBenchmarks(filename);
+
+    // In ket qua
+    printBenchmarkResults(results);
+
+    // Luu ket qua ra file CSV
+    string csvFilename = filename.substr(0, filename.find_last_of('.')) + "_results.csv";
+    saveBenchmarkToCSV(results, csvFilename);
 }
 
 TestConfig create_custom_config(
