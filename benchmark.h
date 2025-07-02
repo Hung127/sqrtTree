@@ -10,9 +10,36 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <ctime>
+#include <random>
+
 #define ll long long
 
 using namespace std;
+using namespace chrono;
+
+class Timer {
+public:
+    Timer() {
+        m_StartTimepoint = ::high_resolution_clock::now(); //get a current time
+    }
+
+    ~Timer() {
+        Stop();
+    }
+
+    auto Stop() {
+        auto endTimePoint = chrono::high_resolution_clock::now();
+
+        auto start = chrono::time_point_cast<chrono::microseconds>(m_StartTimepoint).time_since_epoch().count();
+        auto end = chrono::time_point_cast<chrono::microseconds>(endTimePoint).time_since_epoch().count();
+
+        return end - start;
+    }
+
+private:
+    chrono::time_point<chrono::high_resolution_clock> m_StartTimepoint;
+};
 
 enum ArrayPattern {
     RANDOM = 0,
@@ -100,7 +127,11 @@ void quickSortDESC(vector<int>& arr, int left, int right) {
 
 // Ham sinh so ngau nhien trong khoang [minVal, maxVal]
 int randomInt(int minVal, int maxVal) {
-    return minVal + rand() % (maxVal - minVal + 1);
+    std::random_device rd; // Initialize seed for std::mt19937
+    std::mt19937 gen(rd()); // Random number generator
+    std::uniform_int_distribution<> dis(minVal, maxVal); // Random distribution
+
+    return dis(gen);
 }
 
 // Ham sinh so ngau nhien trong khoang [0.0, 1.0]
@@ -252,10 +283,11 @@ BenchmarkResult benchmarkSqrtTree(const string& filename) {
     }
 
     // Do thoi gian xay dung
-    auto startBuild = high_resolution_clock::now();
-    SqrtTree sqrtTree(arr);
-    auto endBuild = high_resolution_clock::now();
-    result.buildTime = duration_cast<microseconds>(endBuild - startBuild).count();
+    {
+        Timer timer;
+        SqrtTree sqrtTree(arr);
+        result.buildTime = timer.Stop;
+    }
 
     // Xu ly cac truy van
     for (int i = 0; i < q; i++) {
@@ -263,17 +295,15 @@ BenchmarkResult benchmarkSqrtTree(const string& filename) {
         in >> type >> x >> y;
 
         if (type == 1) { // Update
-            auto startUpdate = high_resolution_clock::now();
+            Timer timer;
             sqrtTree.update(x, y);
-            auto endUpdate = high_resolution_clock::now();
-            result.totalUpdateTime += duration_cast<microseconds>(endUpdate - startUpdate).count();
+            result.totalUpdateTime += timer.Stop;
             result.numUpdates++;
         }
         else { // Query
-            auto startQuery = high_resolution_clock::now();
+            Timer timer;
             sqrtTree.query(x, y);
-            auto endQuery = high_resolution_clock::now();
-            result.totalQueryTime += duration_cast<microseconds>(endQuery - startQuery).count();
+            result.totalQueryTime += timer.Stop;
             result.numQueries++;
         }
     }
@@ -303,10 +333,9 @@ BenchmarkResult benchmarkSegmentTree(const string& filename) {
     }
 
     // Do thoi gian xay dung
-    auto startBuild = high_resolution_clock::now();
+    Timer timer
     SegmentTree segTree(arr);
-    auto endBuild = high_resolution_clock::now();
-    result.buildTime = duration_cast<microseconds>(endBuild - startBuild).count();
+    result.buildTime = timer.Stop;
 
     // Xu ly cac truy van
     for (int i = 0; i < q; i++) {
@@ -314,17 +343,15 @@ BenchmarkResult benchmarkSegmentTree(const string& filename) {
         in >> type >> x >> y;
 
         if (type == 1) { // Update
-            auto startUpdate = high_resolution_clock::now();
+            Timer timer;
             segTree.set(x, y);
-            auto endUpdate = high_resolution_clock::now();
-            result.totalUpdateTime += duration_cast<microseconds>(endUpdate - startUpdate).count();
+            result.totalUpdateTime += timer.Stop;
             result.numUpdates++;
         }
         else { // Query
-            auto startQuery = high_resolution_clock::now();
+            Timer timer;
             segTree.query(x, y);
-            auto endQuery = high_resolution_clock::now();
-            result.totalQueryTime += duration_cast<microseconds>(endQuery - startQuery).count();
+            result.totalQueryTime += timer.Stop;
             result.numQueries++;
         }
     }
@@ -354,10 +381,9 @@ BenchmarkResult benchmarkFenwickTree(const string& filename) {
     }
 
     // Do thoi gian xay dung
-    auto startBuild = high_resolution_clock::now();
+    Timer timer;
     FenwickTree fenwickTree(arr);
-    auto endBuild = high_resolution_clock::now();
-    result.buildTime = duration_cast<microseconds>(endBuild - startBuild).count();
+    result.buildTime = timer.Stop;
 
     // Xu ly cac truy van
     for (int i = 0; i < q; i++) {
@@ -365,17 +391,15 @@ BenchmarkResult benchmarkFenwickTree(const string& filename) {
         in >> type >> x >> y;
 
         if (type == 1) { // Update
-            auto startUpdate = high_resolution_clock::now();
+            Timer timer;
             fenwickTree.update(x, y);
-            auto endUpdate = high_resolution_clock::now();
-            result.totalUpdateTime += duration_cast<microseconds>(endUpdate - startUpdate).count();
+            result.totalUpdateTime += timer.Stop;
             result.numUpdates++;
         }
         else { // Query
-            auto startQuery = high_resolution_clock::now();
+            Timer timer;
             fenwickTree.query(x, y);
-            auto endQuery = high_resolution_clock::now();
-            result.totalQueryTime += duration_cast<microseconds>(endQuery - startQuery).count();
+            result.totalQueryTime += timer.Stop;
             result.numQueries++;
         }
     }
@@ -446,13 +470,13 @@ void saveBenchmarkToCSV(const vector<BenchmarkResult>& results, const string& cs
 
     // Data rows
     for (const auto& result : results) {
-        csvFile << result.dataStructureName << ","
-            << result.buildTime << ","
-            << result.numUpdates << ","
-            << result.avgUpdateTime << ","
-            << result.numQueries << ","
-            << result.avgQueryTime << ","
-            << result.totalUpdateTime << ","
+        csvFile << result.dataStructureName << ";"
+            << result.buildTime << ";"
+            << result.numUpdates << ";"
+            << result.avgUpdateTime << ";"
+            << result.numQueries << ";"
+            << result.avgQueryTime << ";"
+            << result.totalUpdateTime << ";"
             << result.totalQueryTime << "\n";
     }
 
