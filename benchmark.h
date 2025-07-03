@@ -21,7 +21,7 @@ using namespace chrono;
 class Timer {
 public:
     Timer() {
-        m_StartTimepoint = ::high_resolution_clock::now(); //get a current time
+        m_StartTimepoint = ::high_resolution_clock::now(); // get current time
     }
 
     ~Timer() {
@@ -49,32 +49,32 @@ enum ArrayPattern {
 };
 
 enum RangePattern {
-    RANDOM_RANGE = 0, // Doan truy van ngau nhien
-    SMALL_RANGES = 1, // Cac doan truy van ngan 
-    LARGE_RANGES = 2, // Cac doan truy van dai
-    FIXED_LENGTH = 3 // Cac doan truy van co do dai co dinh
+    RANDOM_RANGE = 0, // Random query ranges
+    SMALL_RANGES = 1, // Short query ranges
+    LARGE_RANGES = 2, // Long query ranges
+    FIXED_LENGTH = 3 // Query ranges of fixed length
 };
 
 struct TestConfig {
-    int n; // Kich thuoc mang
-    int q; // So luong truy van
-    double ratio; // Ty le truy van cap nhat
-    int	minVal; // Gia tri nho nhat trong mang
-    int maxVal; // Gia tri lon nhat trong mang
-    ArrayPattern arrPat; // Mau sinh mang
-    RangePattern rangePat; // Mau sinh doan truy van
-    int fixLength; // Do dai co dinh cho doan truy van (neu dung FIXED_LENGTH)
+    int n; // Array size
+    int q; // Number of queries
+    double ratio; // Update query ratio
+    int	minVal; // Minimum value in the array
+    int maxVal; // Maximum value in the array
+    ArrayPattern arrPat; // Array generation pattern
+    RangePattern rangePat; // Query range pattern
+    int fixLength; // Fixed length for query range (if using FIXED_LENGTH)
 };
 
 struct BenchmarkResult {
     string dataStructureName;
-    ll buildTime; // Thoi gian build
-    ll totalUpdateTime; // Tong thoi gian cap nhat (μs)
-    ll totalQueryTime; // Tong thoi gian cua truy van (μs)
-    int numUpdates; // So luong cap nhat
-    int numQueries; // So luong truy van
-    double avgUpdateTime; // Thoi gian truy cap trung binh (μs)
-    double avgQueryTime; // Thoi gian truy van trung binh (μs)
+    ll buildTime; // Build time
+    ll totalUpdateTime; // Total update time (μs)
+    ll totalQueryTime; // Total query time (μs)
+    int numUpdates; // Number of updates
+    int numQueries; // Number of queries
+    double avgUpdateTime; // Average update time (μs)
+    double avgQueryTime; // Average query time (μs)
 
     BenchmarkResult() : buildTime(0), totalUpdateTime(0), totalQueryTime(0),
         numUpdates(0), numQueries(0), avgUpdateTime(0), avgQueryTime(0) {
@@ -86,14 +86,14 @@ struct BenchmarkResult {
     }
 };
 
-// Ham partition tong quat voi comparator
+// General partition function with comparator
 template<typename Compare>
 int partition(vector<int>& arr, int low, int high, Compare comp) {
-    int pivot = arr[high]; // Chon phan tu cuoi lam pivot
-    int i = low - 1; // Chi so cua phan tu nho hon
+    int pivot = arr[high]; // Choose the last element as pivot
+    int i = low - 1; // Index of smaller element
 
     for (int j = low; j < high; j++) {
-        // Neu phan tu hien tai thoa man dieu kien so sanh voi pivot
+        // If current element satisfies comparator with pivot
         if (comp(arr[j], pivot)) {
             i++;
             swap(arr[i], arr[j]);
@@ -104,7 +104,7 @@ int partition(vector<int>& arr, int low, int high, Compare comp) {
     return i + 1;
 }
 
-// Ham quickSort tong quat voi comparator
+// General quickSort function with comparator
 template<typename Compare>
 void quickSort(vector<int>& arr, int low, int high, Compare comp) {
     if (low < high) {
@@ -115,17 +115,17 @@ void quickSort(vector<int>& arr, int low, int high, Compare comp) {
     }
 }
 
-// Ham wrapper de sap xep tang dan
+// Wrapper function for ascending sort
 void quickSortASC(vector<int>& arr, int left, int right) {
     quickSort(arr, left, right, [](int a, int b) { return a <= b; });
 }
 
-// Ham wrapper de sap xep giam dan
+// Wrapper function for descending sort
 void quickSortDESC(vector<int>& arr, int left, int right) {
     quickSort(arr, left, right, [](int a, int b) { return a >= b; });
 }
 
-// Ham sinh so ngau nhien trong khoang [minVal, maxVal]
+// Generate random integer in range [minVal, maxVal]
 int randomInt(int minVal, int maxVal) {
     std::random_device rd; // Initialize seed for std::mt19937
     std::mt19937 gen(rd()); // Random number generator
@@ -134,12 +134,12 @@ int randomInt(int minVal, int maxVal) {
     return dis(gen);
 }
 
-// Ham sinh so ngau nhien trong khoang [0.0, 1.0]
+// Generate random double in range [0.0, 1.0]
 double randomDouble() {
     return (double)rand() / RAND_MAX;
 }
 
-// Ham sinh mang theo config
+// Generate array based on config
 vector<int> generateArray(const TestConfig& config) {
     vector<int> arr(config.n);
 
@@ -178,7 +178,7 @@ vector<int> generateArray(const TestConfig& config) {
     return arr;
 }
 
-// Ham sinh cap chi so (l, r) theo mau chi dinh
+// Generate a pair of indices (l, r) according to the specified pattern
 pair<int, int> generateRange(const TestConfig& config, int queryIdx = -1) {
     int l, r;
     switch (config.rangePat)
@@ -207,12 +207,12 @@ pair<int, int> generateRange(const TestConfig& config, int queryIdx = -1) {
         break;
     }
     case FIXED_LENGTH: {
-        int length = config.fixLength; // Lay do dai co dinh (Neu co)
-        l = randomInt(0, config.n - length); // Dam bao co du choox cho 1 doan
+        int length = config.fixLength; // Use fixed length (if specified)
+        l = randomInt(0, config.n - length); // Ensure there is enough space for a segment
         r = l + length - 1;
-        // Neu r vuot qua kich thuoc mang
+        // If r exceeds array size
         if (r >= config.n) {
-            r = config.n - 1; // Tra ve chi so hop le cuoi cung
+            r = config.n - 1; // Return the last valid index
         }
         break;
     }
@@ -223,11 +223,11 @@ pair<int, int> generateRange(const TestConfig& config, int queryIdx = -1) {
     return { l, r };
 }
 
-// Ham sinh test theo config
+// Generate test case according to config
 void generateTest(const string& filename, const TestConfig& config) {
     ofstream out(filename);
     if (!out.is_open()) {
-        std::cerr << "Khong the mo duoc file" << filename << "de ghi" << endl;
+        std::cerr << "Cannot open file " << filename << " for writing" << endl;
         return;
     }
 
@@ -257,20 +257,20 @@ void generateTest(const string& filename, const TestConfig& config) {
     }
 
     out.close();
-    cout << "Da tao test case \"" << filename << "\" voi:" << endl;
-    cout << "- Kich thuoc mang: " << config.n << endl;
-    cout << "- So truy van: " << config.q << endl;
-    cout << "- Ty le cap nhat: " << config.ratio * 100 << "%" << endl;
+    cout << "Created test case \"" << filename << "\" with:" << endl;
+    cout << "- Array size: " << config.n << endl;
+    cout << "- Number of queries: " << config.q << endl;
+    cout << "- Update ratio: " << config.ratio * 100 << "%" << endl;
 }
 
-// Ham benchmark cho SqrtTree
+// Benchmark for SqrtTree
 BenchmarkResult benchmarkSqrtTree(const string& filename) {
     BenchmarkResult result;
     result.dataStructureName = "SqrtTree";
 
     ifstream in(filename);
     if (!in.is_open()) {
-        cerr << "Khong the mo file " << filename << endl;
+        cerr << "Cannot open file " << filename << endl;
         return result;
     }
 
@@ -282,14 +282,14 @@ BenchmarkResult benchmarkSqrtTree(const string& filename) {
         in >> arr[i];
     }
 
-    // Do thoi gian xay dung
+    // Measure build time
     {
         Timer timer;
         SqrtTree sqrtTree(arr);
         result.buildTime = timer.Stop;
     }
 
-    // Xu ly cac truy van
+    // Handle queries
     for (int i = 0; i < q; i++) {
         int type, x, y;
         in >> type >> x >> y;
@@ -313,14 +313,14 @@ BenchmarkResult benchmarkSqrtTree(const string& filename) {
     return result;
 }
 
-// Ham benchmark cho SegmentTree
+// Benchmark for SegmentTree
 BenchmarkResult benchmarkSegmentTree(const string& filename) {
     BenchmarkResult result;
     result.dataStructureName = "SegmentTree";
 
     ifstream in(filename);
     if (!in.is_open()) {
-        cerr << "Khong the mo file " << filename << endl;
+        cerr << "Cannot open file " << filename << endl;
         return result;
     }
 
@@ -332,12 +332,12 @@ BenchmarkResult benchmarkSegmentTree(const string& filename) {
         in >> arr[i];
     }
 
-    // Do thoi gian xay dung
+    // Measure build time
     Timer timer
     SegmentTree segTree(arr);
     result.buildTime = timer.Stop;
 
-    // Xu ly cac truy van
+    // Handle queries
     for (int i = 0; i < q; i++) {
         int type, x, y;
         in >> type >> x >> y;
@@ -361,14 +361,14 @@ BenchmarkResult benchmarkSegmentTree(const string& filename) {
     return result;
 }
 
-// Ham benchmark cho FenwickTree
+// Benchmark for FenwickTree
 BenchmarkResult benchmarkFenwickTree(const string& filename) {
     BenchmarkResult result;
     result.dataStructureName = "FenwickTree";
 
     ifstream in(filename);
     if (!in.is_open()) {
-        cerr << "Khong the mo file " << filename << endl;
+        cerr << "Cannot open file " << filename << endl;
         return result;
     }
 
@@ -380,12 +380,12 @@ BenchmarkResult benchmarkFenwickTree(const string& filename) {
         in >> arr[i];
     }
 
-    // Do thoi gian xay dung
+    // Measure build time
     Timer timer;
     FenwickTree fenwickTree(arr);
     result.buildTime = timer.Stop;
 
-    // Xu ly cac truy van
+    // Handle queries
     for (int i = 0; i < q; i++) {
         int type, x, y;
         in >> type >> x >> y;
@@ -409,11 +409,11 @@ BenchmarkResult benchmarkFenwickTree(const string& filename) {
     return result;
 }
 
-// Ham chay tat ca cac benchmark va so sanh
+// Run all benchmarks and compare
 vector<BenchmarkResult> runAllBenchmarks(const string& filename) {
     vector<BenchmarkResult> results;
 
-    cout << "Dang chay benchmark cho file: " << filename << endl;
+    cout << "Running benchmark for file: " << filename << endl;
     cout << "=======================================" << endl;
 
     // Benchmark SqrtTree
@@ -431,9 +431,9 @@ vector<BenchmarkResult> runAllBenchmarks(const string& filename) {
     return results;
 }
 
-// Ham in ket qua benchmark
+// Print benchmark results
 void printBenchmarkResults(const vector<BenchmarkResult>& results) {
-    cout << "\n======= KET QUA BENCHMARK =======" << endl;
+    cout << "\n======= BENCHMARK RESULTS =======" << endl;
     cout << left << setw(15) << "Data Structure"
         << setw(12) << "Build(μs)"
         << setw(12) << "Updates"
@@ -457,11 +457,11 @@ void printBenchmarkResults(const vector<BenchmarkResult>& results) {
     cout << endl;
 }
 
-// Ham ghi ket qua ra file CSV
+// Save benchmark results to a CSV file
 void saveBenchmarkToCSV(const vector<BenchmarkResult>& results, const string& csvFilename) {
     ofstream csvFile(csvFilename);
     if (!csvFile.is_open()) {
-        cerr << "Khong the tao file CSV: " << csvFilename << endl;
+        cerr << "Cannot create CSV file: " << csvFilename << endl;
         return;
     }
 
@@ -481,21 +481,21 @@ void saveBenchmarkToCSV(const vector<BenchmarkResult>& results, const string& cs
     }
 
     csvFile.close();
-    cout << "Da luu ket qua benchmark vao file: " << csvFilename << endl;
+    cout << "Saved benchmark results to file: " << csvFilename << endl;
 }
 
-// Ham chay toan bo experiment
+// Run the entire experiment
 void runExperiment(const string& filename, const TestConfig& config) {
-    // Tao test case
+    // Generate test case
     generateTest(filename, config);
 
-    // Chay benchmark
+    // Run benchmarks
     vector<BenchmarkResult> results = runAllBenchmarks(filename);
 
-    // In ket qua
+    // Print results
     printBenchmarkResults(results);
 
-    // Luu ket qua ra file CSV
+    // Save results to CSV file
     string csvFilename = filename.substr(0, filename.find_last_of('.')) + "_results.csv";
     saveBenchmarkToCSV(results, csvFilename);
 }
