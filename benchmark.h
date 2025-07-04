@@ -276,7 +276,6 @@ BenchmarkResult benchmarkSqrtTree(const string& filename) {
 
     int n, q;
     in >> n >> q;
-
     vector<int> arr(n);
     for (int i = 0; i < n; i++) {
         in >> arr[i];
@@ -310,105 +309,9 @@ BenchmarkResult benchmarkSqrtTree(const string& filename) {
 
     in.close();
     result.calculateAverages();
-    return result;
-}
-
-// Benchmark for SegmentTree
-BenchmarkResult benchmarkSegmentTree(const string& filename) {
-    BenchmarkResult result;
-    result.dataStructureName = "SegmentTree";
-
-    ifstream in(filename);
-    if (!in.is_open()) {
-        cerr << "Cannot open file " << filename << endl;
-        return result;
-    }
-
-    int n, q;
-    in >> n >> q;
-
-    vector<int> arr(n);
-    for (int i = 0; i < n; i++) {
-        in >> arr[i];
-    }
-
-    // Measure build time
-    Timer timer
-    SegmentTree segTree(arr);
-    result.buildTime = timer.Stop;
-
-    // Handle queries
-    for (int i = 0; i < q; i++) {
-        int type, x, y;
-        in >> type >> x >> y;
-
-        if (type == 1) { // Update
-            Timer timer;
-            segTree.set(x, y);
-            result.totalUpdateTime += timer.Stop;
-            result.numUpdates++;
-        }
-        else { // Query
-            Timer timer;
-            segTree.query(x, y);
-            result.totalQueryTime += timer.Stop;
-            result.numQueries++;
-        }
-    }
-
     in.close();
-    result.calculateAverages();
     return result;
 }
-
-// Benchmark for FenwickTree
-BenchmarkResult benchmarkFenwickTree(const string& filename) {
-    BenchmarkResult result;
-    result.dataStructureName = "FenwickTree";
-
-    ifstream in(filename);
-    if (!in.is_open()) {
-        cerr << "Cannot open file " << filename << endl;
-        return result;
-    }
-
-    int n, q;
-    in >> n >> q;
-
-    vector<int> arr(n);
-    for (int i = 0; i < n; i++) {
-        in >> arr[i];
-    }
-
-    // Measure build time
-    Timer timer;
-    FenwickTree fenwickTree(arr);
-    result.buildTime = timer.Stop;
-
-    // Handle queries
-    for (int i = 0; i < q; i++) {
-        int type, x, y;
-        in >> type >> x >> y;
-
-        if (type == 1) { // Update
-            Timer timer;
-            fenwickTree.update(x, y);
-            result.totalUpdateTime += timer.Stop;
-            result.numUpdates++;
-        }
-        else { // Query
-            Timer timer;
-            fenwickTree.query(x, y);
-            result.totalQueryTime += timer.Stop;
-            result.numQueries++;
-        }
-    }
-
-    in.close();
-    result.calculateAverages();
-    return result;
-}
-
 // Run all benchmarks and compare
 vector<BenchmarkResult> runAllBenchmarks(const string& filename) {
     vector<BenchmarkResult> results;
