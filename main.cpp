@@ -1,5 +1,4 @@
 ﻿#include "SqrtTree.h"
-#include "SegmentTree.h"
 #include "FenwickTree.h"
 #include "BasicLibraries.h"
 #include "benchmark.h"

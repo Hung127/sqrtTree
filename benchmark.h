@@ -68,8 +68,8 @@ struct BenchmarkResult {
     double avgUpdateTime; // Average update time (μs)
     double avgQueryTime; // Average query time (μs)
 
-    BenchmarkResult() : buildTime(0), totalUpdateTime(0), totalQueryTime(0),
-        numUpdates(0), numQueries(0), avgUpdateTime(0), avgQueryTime(0) {
+    BenchmarkResult(const string& name) : buildTime(0), totalUpdateTime(0), totalQueryTime(0),
+        numUpdates(0), numQueries(0), avgUpdateTime(0), avgQueryTime(0), dataStructureName(name) {
     }
 
     void calculateAverages() {

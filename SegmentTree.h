@@ -182,3 +182,5 @@ public:
         return queryRange(0, 0, n - 1, left, right);
     }
 };
+
+#endif

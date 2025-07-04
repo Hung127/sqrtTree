@@ -1,14 +1,19 @@
 #ifndef SQRT_TREE
 #define SQRT_TREE
-#define SqrtTreeItem long long
+#define SqrtTreeItem int
 #include "BasicLibraries.h"
 using namespace std;
 
+// at a layer, we have the layers[i] is the blockSize on that layer
+// we also have the log2(childBlockSize) which could be compute with the
+// formula log2(chilBlockSize) = ceil(layers[i] / 2) on layer i
+// a = (a + 1) >> 1 means that a = ceil(a / 2)
 SqrtTreeItem op(const SqrtTreeItem &a, const SqrtTreeItem &b) {
     return (a + b);
 }
 
-int log2Up(int n) { // find the ceil(log2(n))
+// find the ceil(log2(n))
+int log2Up(int n) {
     int res = 0;
     while ((1 << res) < n) {
         res++;
@@ -74,7 +79,7 @@ class SqrtTree {
             int childBlocksCount = (rBound - lBound + childBlockSize - 1) >> childBlockSizeLog;
             for (int i = 0; i < childBlocksCount; i++) {
                 // init empty answer
-                SqrtTreeItem answer;
+                SqrtTreeItem answer = 0;
                 for (int j = i; j < childBlocksCount; j++) {
                     SqrtTreeItem add = suffix[layer][lBound + (j << childBlockSizeLog)];
                     // accumulating answer
@@ -116,7 +121,7 @@ class SqrtTree {
                     add = query(n + lBlock, n + rBlock, (1 << ceilLog) - n, n);
                 } else {
                     // access the right answer in between array
-                    add = between[layer - 1][betweenOffset + lBound + (lBound << childBlocksCountLog) + rBlock];
+                    add = between[layer - 1][betweenOffset + lBound + (lBlock << childBlocksCountLog) + rBlock];
                 }
                 answer = op(answer, add);
             }
@@ -187,8 +192,14 @@ class SqrtTree {
             update(0, 0, n, 0, idx);
         }
 
-        SqrtTree(const vector<SqrtTreeItem> &a)
-        : n((int) arr.size()), ceilLog(log2Up(n)), onLayer(ceilLog + 1), arr(a), clz(1 << ceilLog) {
+        SqrtTree(const vector<SqrtTreeItem> &a) {
+            arr = a;
+            n = arr.size();
+            ceilLog = log2Up(n);
+            clz.assign(1 << ceilLog, 0);
+            onLayer.assign(ceilLog + 1, 0);
+            layers.clear();
+
             // algorithm to compute clz
             clz[0] = 0; // base case
             for (int i = 1; i < clz.size(); i++) {
@@ -209,22 +220,22 @@ class SqrtTree {
                 onLayer[i] = max(onLayer[i], onLayer[i + 1]);
             }
             int childBlockSizeLog = (ceilLog + 1) >> 1;
-            int childBlockSize = 1 >> childBlockSize;
+            int childBlockSize = 1 << childBlockSizeLog;
             // we use layers.size() - 1 for between layers because the first layer (0) do not use a between, we use index
             int betweenLayers = max(0, (int) layers.size() - 1);
-            // idx size is the number of child blocks on layer 0 (first layer)
-            // idxSize = ceil(n / childBlockSize)
-            int idxSize = (n + childBlockSize - 1) >> childBlockSizeLog;
-            // add idxSize space to the array for child blocks
-            // [n...n + idxSize - 1] is a subarray that each elements is the answer of a childBlock in the original array [0...n-1]
-            arr.resize(n + idxSize);
+            // indexSize is the number of child blocks on layer 0 (first layer)
+            // indexSize = ceil(n / childBlockSize)
+            indexSize = (n + childBlockSize - 1) >> childBlockSizeLog;
+            // add indexSize space to the array for child blocks
+            // [n...n + indexSize - 1] is a subarray that each elements is the answer of a childBlock in the original array [0...n-1]
+            arr.resize(n + indexSize);
             // each layer has a prefix and suffix, we treat first n elements as an array, next indexSize elements as an another distinct array array
             // we assign the default value for every element in prefix and suffix array
-            prefix.assign(layers.size(), vector<SqrtTreeItem>(n + idxSize, 0));
-            suffix.assign(layers.size(), vector<SqrtTreeItem>(n + idxSize, 0));
+            prefix.assign(layers.size(), vector<SqrtTreeItem>(n + indexSize, 0));
+            suffix.assign(layers.size(), vector<SqrtTreeItem>(n + indexSize, 0));
             // for every layer (except the first one), we create a array to holds the answers for all queries from a whole child block to another whole child blocks
             // this array has two part too, first (1 << ceilLog or 2^ceilLog) elements will holds the answers for childBlocks on layer - 1
-            // the remaining (childBlockSize elements) is for all elements that we put at [n...n + idxSize-1] in the original array
+            // the remaining (childBlockSize elements) is for all elements that we put at [n...n + indexSize-1] in the original array
             // we might not use all the space that we assigned (because 1 << ceilLog is >= n)
             between.assign(betweenLayers, vector<SqrtTreeItem>((1 << ceilLog) + childBlockSize, 0));
             // build the whole tree.
