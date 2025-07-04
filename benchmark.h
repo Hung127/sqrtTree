@@ -20,25 +20,17 @@ using namespace chrono;
 
 class Timer {
 public:
-    Timer() {
-        m_StartTimepoint = ::high_resolution_clock::now(); // get current time
-    }
+    Timer() : m_StartTimepoint(high_resolution_clock::now()) {}
 
-    ~Timer() {
-        Stop();
-    }
-
-    auto Stop() {
-        auto endTimePoint = chrono::high_resolution_clock::now();
-
-        auto start = chrono::time_point_cast<chrono::microseconds>(m_StartTimepoint).time_since_epoch().count();
-        auto end = chrono::time_point_cast<chrono::microseconds>(endTimePoint).time_since_epoch().count();
-
+    ll Stop() {
+        auto endTimePoint = high_resolution_clock::now();
+        auto start = time_point_cast<microseconds>(m_StartTimepoint).time_since_epoch().count();
+        auto end = time_point_cast<microseconds>(endTimePoint).time_since_epoch().count();
         return end - start;
     }
 
 private:
-    chrono::time_point<chrono::high_resolution_clock> m_StartTimepoint;
+    time_point<high_resolution_clock> m_StartTimepoint;
 };
 
 enum ArrayPattern {
@@ -126,17 +118,16 @@ void quickSortDESC(vector<int>& arr, int left, int right) {
 }
 
 // Generate random integer in range [minVal, maxVal]
+static mt19937 gen(random_device{}());
 int randomInt(int minVal, int maxVal) {
-    std::random_device rd; // Initialize seed for std::mt19937
-    std::mt19937 gen(rd()); // Random number generator
-    std::uniform_int_distribution<> dis(minVal, maxVal); // Random distribution
-
+    uniform_int_distribution<> dis(minVal, maxVal);
     return dis(gen);
 }
 
 // Generate random double in range [0.0, 1.0]
 double randomDouble() {
-    return (double)rand() / RAND_MAX;
+    uniform_real_distribution<> dis(0.0, 1.0);
+    return dis(gen);
 }
 
 // Generate array based on config
@@ -247,12 +238,12 @@ void generateTest(const string& filename, const TestConfig& config) {
             int idx = randomInt(0, config.n - 1);
             int val = randomInt(config.minVal, config.maxVal);
 
-            out << "1. " << idx << " " << val << "\n";
+            out << "1 " << idx << " " << val << "\n";
             updateQueries++;
         }
         else {
             auto [l, r] = generateRange(config, i);
-            out << "0. " << l << " " << r << "\n";
+            out << "0 " << l << " " << r << "\n";
         }
     }
 
@@ -263,11 +254,9 @@ void generateTest(const string& filename, const TestConfig& config) {
     cout << "- Update ratio: " << config.ratio * 100 << "%" << endl;
 }
 
-// Benchmark for SqrtTree
-BenchmarkResult benchmarkSqrtTree(const string& filename) {
-    BenchmarkResult result;
-    result.dataStructureName = "SqrtTree";
-
+template<typename TreeType, typename UpdateFunc, typename QueryFunc>
+BenchmarkResult benchmarkTree(const string& filename, const string& name, UpdateFunc update, QueryFunc query) {
+    BenchmarkResult result(name);
     ifstream in(filename);
     if (!in.is_open()) {
         cerr << "Cannot open file " << filename << endl;
@@ -277,37 +266,30 @@ BenchmarkResult benchmarkSqrtTree(const string& filename) {
     int n, q;
     in >> n >> q;
     vector<int> arr(n);
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
         in >> arr[i];
     }
 
-    // Measure build time
-    {
-        Timer timer;
-        SqrtTree sqrtTree(arr);
-        result.buildTime = timer.Stop;
-    }
+    Timer buildTimer;
+    TreeType tree(arr);
+    result.buildTime = buildTimer.Stop();
 
-    // Handle queries
-    for (int i = 0; i < q; i++) {
+    Timer queryTimer; // Timer for all queries
+    for (int i = 0; i < q; ++i) {
         int type, x, y;
         in >> type >> x >> y;
-
-        if (type == 1) { // Update
+        if (type == 1) {
             Timer timer;
-            sqrtTree.update(x, y);
-            result.totalUpdateTime += timer.Stop;
+            update(tree, x, y);
+            result.totalUpdateTime += timer.Stop();
             result.numUpdates++;
         }
-        else { // Query
-            Timer timer;
-            sqrtTree.query(x, y);
-            result.totalQueryTime += timer.Stop;
+        else {
+            query(tree, x, y);
             result.numQueries++;
         }
     }
-
-    in.close();
+    result.totalQueryTime = queryTimer.Stop();
     result.calculateAverages();
     in.close();
     return result;
@@ -315,36 +297,43 @@ BenchmarkResult benchmarkSqrtTree(const string& filename) {
 // Run all benchmarks and compare
 vector<BenchmarkResult> runAllBenchmarks(const string& filename) {
     vector<BenchmarkResult> results;
+    cout << "Running benchmark for file: " << filename << "\n=======================================\n";
 
-    cout << "Running benchmark for file: " << filename << endl;
-    cout << "=======================================" << endl;
+    cout << "Benchmark SqrtTree...\n";
+    results.push_back(benchmarkTree<SqrtTree>(
+        filename, "SqrtTree",
+        [](SqrtTree& tree, int idx, int val) { tree.update(idx, val); },
+        [](SqrtTree& tree, int l, int r) { return tree.query(l, r); }
+    ));
 
-    // Benchmark SqrtTree
-    cout << "Benchmark SqrtTree..." << endl;
-    results.push_back(benchmarkSqrtTree(filename));
+    cout << "Benchmark SegmentTree...\n";
+    results.push_back(benchmarkTree<SegmentTree>(
+        filename, "SegmentTree",
+        [](SegmentTree& tree, int idx, int val) { tree.set(idx, val); },
+        [](SegmentTree& tree, int l, int r) { return tree.query(l, r); }
+    ));
 
-    // Benchmark SegmentTree
-    cout << "Benchmark SegmentTree..." << endl;
-    results.push_back(benchmarkSegmentTree(filename));
-
-    // Benchmark FenwickTree
-    cout << "Benchmark FenwickTree..." << endl;
-    results.push_back(benchmarkFenwickTree(filename));
+    cout << "Benchmark FenwickTree...\n";
+    results.push_back(benchmarkTree<FenwickTree>(
+        filename, "FenwickTree",
+        [](FenwickTree& tree, int idx, int val) { tree.set(idx, val); },
+        [](FenwickTree& tree, int l, int r) { return tree.query(l, r); }
+    ));
 
     return results;
 }
 
 // Print benchmark results
 void printBenchmarkResults(const vector<BenchmarkResult>& results) {
-    cout << "\n======= BENCHMARK RESULTS =======" << endl;
+    cout << "\n======= BENCHMARK RESULTS =======\n";
     cout << left << setw(15) << "Data Structure"
-        << setw(12) << "Build(μs)"
+        << setw(12) << "Build(us)"
         << setw(12) << "Updates"
-        << setw(15) << "Avg Update(μs)"
+        << setw(15) << "Avg Update(us)"
         << setw(12) << "Queries"
-        << setw(15) << "Avg Query(μs)"
-        << setw(15) << "Total Update(μs)"
-        << setw(15) << "Total Query(μs)" << endl;
+        << setw(15) << "Avg Query(us)"
+        << setw(15) << "Total Update(us)"
+        << setw(15) << "Total Query(us)" << endl;
     cout << string(110, '-') << endl;
 
     for (const auto& result : results) {
@@ -369,22 +358,22 @@ void saveBenchmarkToCSV(const vector<BenchmarkResult>& results, const string& cs
     }
 
     // Header
-    csvFile << "DataStructure,BuildTime(μs),NumUpdates,AvgUpdateTime(μs),NumQueries,AvgQueryTime(μs),TotalUpdateTime(μs),TotalQueryTime(μs)\n";
-
-    // Data rows
+    csvFile << "DataStructure;BuildTime(us);NumUpdates;AvgUpdateTime(us);NumQueries;AvgQueryTime(us);TotalUpdateTime(us);TotalQueryTime(us)\n";
+    
+    // Data collums
     for (const auto& result : results) {
         csvFile << result.dataStructureName << ";"
             << result.buildTime << ";"
             << result.numUpdates << ";"
-            << result.avgUpdateTime << ";"
+            << fixed << setprecision(2) << result.avgUpdateTime << ";"
             << result.numQueries << ";"
-            << result.avgQueryTime << ";"
+            << fixed << setprecision(2) << result.avgQueryTime << ";"
             << result.totalUpdateTime << ";"
             << result.totalQueryTime << "\n";
     }
 
     csvFile.close();
-    cout << "Saved benchmark results to file: " << csvFilename << endl;
+    cout << "Saved benchmark results to: " << csvFilename << endl;
 }
 
 // Run the entire experiment
@@ -404,21 +393,10 @@ void runExperiment(const string& filename, const TestConfig& config) {
 }
 
 TestConfig create_custom_config(
-    int n, int q, double updateRatio,
-    int minVal, int maxVal,
-    ArrayPattern arrPat,
-    RangePattern rangePat,
-    int fixLength = 0
+    int n, int q, double updateRatio, int minVal, int maxVal,
+    ArrayPattern arrPat, RangePattern rangePat, int fixLength = 0
 ) {
-    TestConfig config;
-    config.n = n;
-    config.q = q;
-    config.ratio = updateRatio;
-    config.minVal = minVal;
-    config.maxVal = maxVal;
-    config.arrPat = arrPat;
-    config.rangePat = rangePat;
-    config.fixLength = fixLength;
+    TestConfig config{ n, q, updateRatio, minVal, maxVal, arrPat, rangePat, fixLength };
     return config;
 }
 #endif // !benchmark_h
